@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Juancho Content Hub</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap');
+  :root {
+    --bg: #0a0a0f; --surface: #13131a; --surface2: #1c1c27; --border: #2a2a3a;
+    --accent: #ff7a59; --li: #0a66c2; --tt: #fe2c55;
+    --text: #f0f0f5; --muted: #7a7a9a; --success: #2dd4a0; --warning: #f5c842;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+  .header {
+    background:linear-gradient(135deg,#13131a,#1a1a2e); border-bottom:1px solid var(--border);
+    padding:16px 28px; display:flex; align-items:center; justify-content:space-between;
+    position:sticky; top:0; z-index:100;
+  }
+  .logo { display:flex; align-items:center; gap:10px; }
+  .logo-icon { width:34px;height:34px;background:linear-gradient(135deg,var(--accent),#ff9a7a);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px; }
+  .logo-text { font-family:'Syne',sans-serif; font-weight:800; font-size:17px; }
+  .logo-text span { color:var(--accent); }
+  .week-nav { display:flex;align-items:center;gap:10px; }
+  .week-nav button { background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:15px;transition:all .2s; }
+  .week-nav button:hover { background:var(--border); }
+  .week-label { font-family:'Syne',sans-serif;font-size:13px;font-weight:600;min-width:200px;text-align:center; }
+
+  .nav-tabs { display:flex;gap:4px;padding:14px 28px 0;border-bottom:1px solid var(--border);background:var(--surface); }
+  .tab { padding:9px 18px;border-radius:10px 10px 0 0;cursor:pointer;font-family:'Syne',sans-serif;font-weight:600;font-size:13px;color:var(--muted);transition:all .2s;border:1px solid transparent;border-bottom:none; }
+  .tab:hover { color:var(--text);background:var(--surface2); }
+  .tab.active { color:var(--text);background:var(--bg);border-color:var(--border);position:relative;bottom:-1px; }
+
+  .main { padding:24px 28px; }
+  .view { display:none; }
+  .view.active { display:block; }
+
+  /* PARRILLA */
+  .parrilla-grid { display:grid;grid-template-columns:1fr 1fr;gap:20px; }
+  .platform-col { background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden; }
+  .plat-head { padding:14px 18px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border); }
+  .plat-head.li { background:linear-gradient(135deg,rgba(10,102,194,.2),transparent); }
+  .plat-head.tt { background:linear-gradient(135deg,rgba(254,44,85,.2),transparent); }
+  .plat-badge-icon { width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;font-family:'Syne',sans-serif; }
+  .plat-badge-icon.li { background:var(--li); }
+  .plat-badge-icon.tt { background:var(--tt); }
+  .plat-title { font-family:'Syne',sans-serif;font-weight:700;font-size:14px; }
+  .plat-sub { font-size:11px;color:var(--muted); }
+  .plat-count { margin-left:auto;background:var(--surface2);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--muted); }
+
+  .day-slot { padding:12px 18px;border-bottom:1px solid var(--border); }
+  .day-slot:last-child { border-bottom:none; }
+  .day-label { font-family:'Syne',sans-serif;font-weight:700;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px;display:flex;align-items:center;gap:8px; }
+  .today-badge { background:var(--accent);color:white;font-size:9px;padding:2px 6px;border-radius:4px; }
+
+  .ccard { background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:11px 13px;margin-bottom:6px;cursor:pointer;transition:all .2s; }
+  .ccard:hover { border-color:var(--accent);transform:translateY(-1px); }
+  .ccard.posted { border-left:3px solid var(--success); }
+  .ccard.pending { border-left:3px solid var(--warning); }
+  .ccard.suggestion { border-left:3px solid var(--muted);opacity:.85; }
+  .ccard-status { font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;display:flex;align-items:center;gap:6px; }
+  .ccard-status.posted { color:var(--success); }
+  .ccard-status.pending { color:var(--warning); }
+  .ccard-status.suggestion { color:var(--muted); }
+  .ccard-text { font-size:12px;line-height:1.5; }
+  .ccard-meta { margin-top:7px;display:flex;align-items:center;gap:6px;flex-wrap:wrap; }
+  .ctag { font-size:10px;padding:2px 7px;border-radius:4px;background:var(--border);color:var(--muted); }
+  .ctag.breeze { background:rgba(255,122,89,.15);color:var(--accent); }
+  .ctag.aeo { background:rgba(45,212,160,.15);color:var(--success); }
+  .ctag.agentes { background:rgba(165,120,255,.15);color:#a578ff; }
+  .ctag.human,.ctag.reflection { background:rgba(10,102,194,.15);color:#5ba3e8; }
+  .imp-count { margin-left:auto;font-size:11px;color:var(--success); }
+
+  .mark-btn { background:none;border:1px solid var(--success);color:var(--success);padding:3px 9px;border-radius:5px;font-size:10px;cursor:pointer;transition:all .2s; }
+  .mark-btn:hover { background:rgba(45,212,160,.1); }
+
+  .empty-slot { padding:9px 12px;border:1px dashed var(--border);border-radius:9px;text-align:center;color:var(--muted);font-size:12px;cursor:pointer;transition:all .2s; }
+  .empty-slot:hover { border-color:var(--accent);color:var(--accent); }
+  .add-more-btn { display:block;width:100%;padding:9px;background:none;border:1px dashed var(--border);border-radius:9px;color:var(--muted);font-size:11px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;margin-top:5px; }
+  .add-more-btn:hover { border-color:var(--accent);color:var(--accent); }
+
+  /* CALENDAR */
+  .cal-wrap { background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden; }
+  .cal-head { padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between; }
+  .cal-title { font-family:'Syne',sans-serif;font-weight:700;font-size:18px;text-transform:capitalize; }
+  .cal-legend { display:flex;gap:14px; }
+  .leg-item { display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted); }
+  .leg-dot { width:7px;height:7px;border-radius:50%; }
+  .cal-daynames { display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--border); }
+  .cal-dayname { padding:9px;text-align:center;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px; }
+  .cal-grid { display:grid;grid-template-columns:repeat(7,1fr); }
+  .cal-cell { border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:8px;min-height:80px;cursor:pointer;transition:background .2s; }
+  .cal-cell:nth-child(7n) { border-right:none; }
+  .cal-cell:hover { background:var(--surface2); }
+  .cal-cell.today-cell { background:rgba(255,122,89,.05); }
+  .cal-cell.other { opacity:.35; }
+  .cal-num { font-family:'Syne',sans-serif;font-weight:700;font-size:12px;margin-bottom:5px;color:var(--muted); }
+  .today-cell .cal-num { color:var(--accent);background:rgba(255,122,89,.15);width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center; }
+  .cal-dot-li-posted { background:rgba(10,102,194,.3);color:#7ab8f5;font-size:10px;padding:2px 5px;border-radius:3px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+  .cal-dot-tt-posted { background:rgba(254,44,85,.3);color:#ff8099;font-size:10px;padding:2px 5px;border-radius:3px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+  .cal-dot-li-suggest { background:rgba(10,102,194,.1);color:#5a8ab5;font-size:10px;padding:2px 5px;border-radius:3px;border:1px dashed rgba(10,102,194,.3);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+  .cal-dot-tt-suggest { background:rgba(254,44,85,.1);color:#b56070;font-size:10px;padding:2px 5px;border-radius:3px;border:1px dashed rgba(254,44,85,.3);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+
+  /* GENERATOR */
+  .gen-grid { display:grid;grid-template-columns:1fr 1fr;gap:20px; }
+  .gen-card { background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden; }
+  .gen-head { padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px; }
+  .gen-head.li { background:linear-gradient(135deg,rgba(10,102,194,.15),transparent); }
+  .gen-head.tt { background:linear-gradient(135deg,rgba(254,44,85,.15),transparent); }
+  .gen-icon { width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;font-family:'Syne',sans-serif; }
+  .gen-icon.li { background:var(--li); }
+  .gen-icon.tt { background:var(--tt); }
+  .gen-name { font-family:'Syne',sans-serif;font-weight:800;font-size:17px; }
+  .gen-sub { font-size:11px;color:var(--muted);margin-top:2px; }
+  .gen-body { padding:18px 22px; }
+  .gen-opts { display:flex;flex-direction:column;gap:8px;margin-bottom:14px; }
+  .gen-opt { padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;cursor:pointer;display:flex;align-items:center;gap:9px;transition:all .2s; }
+  .gen-opt:hover { border-color:var(--accent); }
+  .gen-opt.sel { border-color:var(--accent);background:rgba(255,122,89,.08); }
+  .reflection-subq { display:none;margin-top:10px;padding:12px 14px;background:rgba(10,102,194,.06);border:1px solid rgba(10,102,194,.2);border-radius:10px;animation:fadeUp .25s ease forwards; }
+  .reflection-subq.visible { display:block; }
+  .subq-label { font-family:'Syne',sans-serif;font-weight:700;font-size:11px;color:#5ba3e8;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px; }
+  .subq-opts { display:flex;flex-direction:column;gap:6px; }
+  .subq-opt { display:flex;align-items:center;gap:9px;padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .2s; }
+  .subq-opt:hover { border-color:#5ba3e8; }
+  .subq-opt.sel { border-color:#0a66c2;background:rgba(10,102,194,.1); }
+  .subq-icon { font-size:16px;flex-shrink:0; }
+  .subq-title { font-size:12px;font-weight:600; }
+  .subq-sub { font-size:10px;color:var(--muted);margin-top:1px; }
+  .gen-opt-icon { font-size:15px; }
+  .gen-opt-title { font-size:13px;font-weight:500; }
+  .gen-opt-sub { font-size:10px;color:var(--muted); }
+  .gen-btn { width:100%;padding:13px;border:none;border-radius:11px;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:all .2s;letter-spacing:.5px; }
+  .gen-btn.tt-gen { background:linear-gradient(135deg,var(--tt),#ff6b8a);color:white; }
+  .gen-btn.li-gen { background:linear-gradient(135deg,var(--li),#1a7fd4);color:white; }
+  .gen-btn:hover { transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,0,0,.3); }
+  .gen-results { margin-top:14px;display:flex;flex-direction:column;gap:9px; }
+  .res-card { background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:13px 15px;animation:fadeUp .35s ease forwards;opacity:0; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(7px)} to{opacity:1;transform:translateY(0)} }
+  .res-card:nth-child(1){animation-delay:.05s} .res-card:nth-child(2){animation-delay:.15s} .res-card:nth-child(3){animation-delay:.25s}
+  .res-head { display:flex;align-items:center;justify-content:space-between;margin-bottom:7px; }
+  .res-num { font-family:'Syne',sans-serif;font-weight:700;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px; }
+  .res-actions { display:flex;gap:5px; }
+  .res-btn { padding:3px 9px;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid;transition:all .2s;font-family:'DM Sans',sans-serif; }
+  .res-btn.add { border-color:var(--success);color:var(--success);background:none; }
+  .res-btn.add:hover { background:rgba(45,212,160,.1); }
+  .res-btn.skip { border-color:var(--border);color:var(--muted);background:none; }
+  .res-btn.skip:hover { border-color:var(--muted); }
+  .res-text { font-size:12px;line-height:1.6; }
+  .res-tags { margin-top:7px;display:flex;gap:5px;flex-wrap:wrap; }
+  .loading { display:flex;flex-direction:column;align-items:center;padding:28px;gap:10px;color:var(--muted);font-size:12px; }
+  .spinner { width:26px;height:26px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+
+  /* ANALYTICS */
+  .metrics { display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px; }
+  .metric { background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px; }
+  .metric-label { font-size:11px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px; }
+  .metric-val { font-family:'Syne',sans-serif;font-weight:800;font-size:26px; }
+  .metric-val.c-accent { color:var(--accent); } .metric-val.c-li { color:#5ba3e8; } .metric-val.c-tt { color:#ff8099; } .metric-val.c-green { color:var(--success); }
+  .metric-sub { font-size:10px;color:var(--muted);margin-top:3px; }
+  .analytics-table { background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden; }
+  .table-title { padding:14px 18px;border-bottom:1px solid var(--border);font-family:'Syne',sans-serif;font-weight:700;font-size:14px; }
+  table { width:100%;border-collapse:collapse; }
+  thead th { padding:10px 14px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);background:var(--surface2);font-family:'Syne',sans-serif;font-weight:600; }
+  tbody td { padding:10px 14px;border-top:1px solid var(--border);font-size:12px; }
+  tbody tr:hover td { background:var(--surface2); }
+  .plt-badge { display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600; }
+  .plt-badge.li { background:rgba(10,102,194,.2);color:#5ba3e8; } .plt-badge.tt { background:rgba(254,44,85,.2);color:#ff8099; }
+  .st-badge { padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600; }
+  .st-badge.posted { background:rgba(45,212,160,.15);color:var(--success); }
+  .st-badge.pending { background:rgba(245,200,66,.15);color:var(--warning); }
+  .st-badge.suggestion { background:rgba(122,122,154,.1);color:var(--muted); }
+  .imp-inp { background:none;border:none;color:var(--text);font-size:12px;font-family:'DM Sans',sans-serif;width:75px;cursor:pointer;border-bottom:1px dashed var(--border);padding:2px 3px; }
+  .imp-inp:focus { outline:none;border-bottom-color:var(--accent); }
+
+  /* MODAL */
+  .overlay { position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;z-index:999;opacity:0;pointer-events:none;transition:opacity .2s; }
+  .overlay.open { opacity:1;pointer-events:all; }
+  .modal { background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:26px;max-width:460px;width:90%;transform:translateY(10px);transition:transform .2s; }
+  .overlay.open .modal { transform:translateY(0); }
+  .modal-title { font-family:'Syne',sans-serif;font-weight:800;font-size:17px;margin-bottom:13px; }
+  .modal-body { font-size:13px;line-height:1.6;margin-bottom:16px;color:var(--text); }
+  .modal-label { font-size:11px;color:var(--muted);display:block;margin-bottom:5px; }
+  .modal-input { background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;width:100%;font-family:'DM Sans',sans-serif; }
+  .modal-input:focus { outline:none;border-color:var(--accent); }
+  .modal-footer { display:flex;gap:8px;justify-content:flex-end;margin-top:18px; }
+  .mbtn { padding:9px 18px;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid;font-family:'Syne',sans-serif;transition:all .2s; }
+  .mbtn.primary { background:var(--success);border-color:var(--success);color:#0a0a0f; }
+  .mbtn.secondary { background:none;border-color:var(--border);color:var(--muted); }
+  .mbtn:hover { opacity:.85; }
+
+  /* TOAST */
+  .toast { position:fixed;bottom:22px;right:22px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 18px;font-size:12px;font-weight:500;transform:translateY(16px);opacity:0;transition:all .28s;z-index:2000;border-left:3px solid var(--success); }
+  .toast.show { transform:translateY(0);opacity:1; }
+
+  @media(max-width:860px){.parrilla-grid,.gen-grid,.metrics{grid-template-columns:1fr}.main{padding:14px}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon">🚀</div>
+    <div class="logo-text">Juancho <span>Content Hub</span></div>
+  </div>
+  <div class="week-nav">
+    <button onclick="changeWeek(-1)">←</button>
+    <div class="week-label" id="weekLabel">—</div>
+    <button onclick="changeWeek(1)">→</button>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div style="font-size:11px;color:var(--muted);">HubSpot Academy · LATAM</div>
+    <button onclick="resetData()" title="Reiniciar datos de ejemplo" style="background:none;border:1px solid var(--border);color:var(--muted);border-radius:7px;padding:5px 10px;font-size:11px;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--tt)';this.style.color='var(--tt)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">↺ Reset</button>
+  </div>
+</div>
+
+<div class="nav-tabs">
+  <div class="tab active" onclick="switchTab('parrilla',this)">📋 Parrilla</div>
+  <div class="tab" onclick="switchTab('calendario',this)">📅 Calendario</div>
+  <div class="tab" onclick="switchTab('generador',this)">✨ Generador</div>
+  <div class="tab" onclick="switchTab('analytics',this)">📊 Analytics</div>
+</div>
+
+<div class="main">
+  <!-- PARRILLA -->
+  <div id="view-parrilla" class="view active">
+    <div class="parrilla-grid">
+      <div class="platform-col">
+        <div class="plat-head li">
+          <div class="plat-badge-icon li">in</div>
+          <div><div class="plat-title">LinkedIn</div><div class="plat-sub">Posts humanos + HubSpot</div></div>
+          <div class="plat-count" id="li-count">— posts</div>
+        </div>
+        <div id="li-days"></div>
+      </div>
+      <div class="platform-col">
+        <div class="plat-head tt">
+          <div class="plat-badge-icon tt">TT</div>
+          <div><div class="plat-title">TikTok</div><div class="plat-sub">Videos ≤45s · Demo HubSpot</div></div>
+          <div class="plat-count" id="tt-count">— videos</div>
+        </div>
+        <div id="tt-days"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CALENDARIO -->
+  <div id="view-calendario" class="view">
+    <div class="cal-wrap">
+      <div class="cal-head">
+        <div class="cal-title" id="cal-title">—</div>
+        <div class="cal-legend">
+          <div class="leg-item"><div class="leg-dot" style="background:var(--li)"></div>LinkedIn</div>
+          <div class="leg-item"><div class="leg-dot" style="background:var(--tt)"></div>TikTok</div>
+          <div class="leg-item"><div class="leg-dot" style="background:var(--border)"></div>Sugerencia</div>
+        </div>
+      </div>
+      <div class="cal-daynames">
+        <div class="cal-dayname">Lun</div><div class="cal-dayname">Mar</div><div class="cal-dayname">Mié</div>
+        <div class="cal-dayname">Jue</div><div class="cal-dayname">Vie</div><div class="cal-dayname">Sáb</div><div class="cal-dayname">Dom</div>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
+  </div>
+
+  <!-- GENERADOR -->
+  <div id="view-generador" class="view">
+    <div class="gen-grid">
+      <!-- LinkedIn -->
+      <div class="gen-card">
+        <div class="gen-head li">
+          <div class="gen-icon li">in</div>
+          <div><div class="gen-name">LinkedIn</div><div class="gen-sub">Marca personal · Humano + HubSpot</div></div>
+        </div>
+        <div class="gen-body">
+          <div class="gen-opts">
+            <div class="gen-opt sel" data-p="li" data-t="reflection" onclick="pickOpt(this)">
+              <div class="gen-opt-icon">🪞</div>
+              <div><div class="gen-opt-title">Reflexión personal + HubSpot</div><div class="gen-opt-sub">Tu experiencia → aprendizaje → herramienta</div></div>
+            </div>
+            <!-- Sub-question for reflection type -->
+            <div id="li-reflection-subq" class="reflection-subq">
+              <div class="subq-label">¿De dónde viene esta historia?</div>
+              <div class="subq-opts">
+                <div class="subq-opt sel" data-source="personal" onclick="pickSource(this)">
+                  <span class="subq-icon">🙋</span>
+                  <div><div class="subq-title">Experiencia personal</div><div class="subq-sub">Algo que viví yo — un fin de semana, un reto, una reflexión mía</div></div>
+                </div>
+                <div class="subq-opt" data-source="cliente" onclick="pickSource(this)">
+                  <span class="subq-icon">🤝</span>
+                  <div><div class="subq-title">Conversación con cliente</div><div class="subq-sub">Algo que me dijo un cliente, una sesión de bootcamp, un caso real</div></div>
+                </div>
+              </div>
+            </div>
+            <div class="gen-opt" data-p="li" data-t="milestone" onclick="pickOpt(this)">
+              <div class="gen-opt-icon">🏆</div>
+              <div><div class="gen-opt-title">Hito o logro profesional</div><div class="gen-opt-sub">Un logro + herramienta que usaste</div></div>
+            </div>
+            <div class="gen-opt" data-p="li" data-t="contraste" onclick="pickOpt(this)">
+              <div class="gen-opt-icon">⚡</div>
+              <div><div class="gen-opt-title">Antes vs. Después con HubSpot</div><div class="gen-opt-sub">Historia de transformación</div></div>
+            </div>
+          </div>
+          <button class="gen-btn li-gen" id="li-gen-btn" onclick="generateLI()">✨ Generar ideas LinkedIn</button>
+          <div id="li-results" class="gen-results"></div>
+        </div>
+      </div>
+      <!-- TikTok -->
+      <div class="gen-card">
+        <div class="gen-head tt">
+          <div class="gen-icon tt">TT</div>
+          <div><div class="gen-name">TikTok</div><div class="gen-sub">Videos ≤45s · Hook + Demo HubSpot</div></div>
+        </div>
+        <div class="gen-body">
+          <div class="gen-opts">
+            <div class="gen-opt sel" data-p="tt" data-t="breeze" onclick="pickOpt(this)">
+              <div class="gen-opt-icon">🤖</div>
+              <div><div class="gen-opt-title">Breeze Assistant</div><div class="gen-opt-sub">Hook + qué logra + demo rápida</div></div>
+            </div>
+            <div class="gen-opt" data-p="tt" data-t="aeo" onclick="pickOpt(this)">
+              <div class="gen-opt-icon">🔍</div>
+              <div><div class="gen-opt-title">AEO — Answer Engine Optimization</div><div class="gen-opt-sub">El nuevo SEO para motores de IA</div></div>
+            </div>
+            <div class="gen-opt" data-p="tt" data-t="agentes" onclick="pickOpt(this)">
+              <div class="gen-opt-icon">🎯</div>
+              <div><div class="gen-opt-title">Agentes (Prospección / Customer)</div><div class="gen-opt-sub">Agente en acción → resultado concreto</div></div>
+            </div>
+          </div>
+          <button class="gen-btn tt-gen" onclick="generate('tt')">✨ Generar ideas TikTok</button>
+          <div id="tt-results" class="gen-results"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANALYTICS -->
+  <div id="view-analytics" class="view">
+    <div class="metrics">
+      <div class="metric"><div class="metric-label">Impresiones totales</div><div class="metric-val c-accent" id="m-total">0</div><div class="metric-sub">Últimas 4 semanas</div></div>
+      <div class="metric"><div class="metric-label">Posts LinkedIn</div><div class="metric-val c-li" id="m-li">0</div><div class="metric-sub">Publicados este mes</div></div>
+      <div class="metric"><div class="metric-label">Videos TikTok</div><div class="metric-val c-tt" id="m-tt">0</div><div class="metric-sub">Publicados este mes</div></div>
+      <div class="metric"><div class="metric-label">Mejor post</div><div class="metric-val c-green" id="m-best">—</div><div class="metric-sub" id="m-best-sub">impresiones</div></div>
+    </div>
+    <div class="analytics-table">
+      <div class="table-title">📈 Historial de publicaciones</div>
+      <table><thead><tr><th>Fecha</th><th>Plataforma</th><th>Contenido</th><th>Tipo</th><th>Estado</th><th>Impresiones</th></tr></thead>
+      <tbody id="a-tbody"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-title" id="m-title">—</div>
+    <div class="modal-body" id="m-body"></div>
+    <div id="m-extra"></div>
+    <div class="modal-footer">
+      <button class="mbtn secondary" onclick="closeModal()">Cancelar</button>
+      <button class="mbtn primary" id="m-confirm">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const today = new Date();
+today.setHours(0,0,0,0);
+const todayStr = today.toISOString().split('T')[0];
+let weekStart = getWeekStart(today);
+
+function getWeekStart(d){
+  const x=new Date(d); const day=x.getDay(); const diff=x.getDate()-day+(day===0?-6:1);
+  x.setDate(diff); x.setHours(0,0,0,0); return x;
+}
+function ds(base,offset=0){const d=new Date(base);d.setDate(d.getDate()+offset);return d.toISOString().split('T')[0];}
+function fmt(str){return new Date(str+'T12:00:00').toLocaleDateString('es-ES',{day:'numeric',month:'short'});}
+
+// ── PERSISTENCIA ──────────────────────────────────────────────
+const STORAGE_KEY = 'juancho_posts_v1';
+const UID_KEY     = 'juancho_uid_v1';
+
+const SAMPLE_POSTS = [
+  {id:1,p:'li',date:ds(today,-6),text:'Tres años en España y la Maratón de Madrid me enseñaron algo: todo proceso requiere sus pasos. Igual que activar un CRM en tu equipo.',type:'reflection',status:'posted',imps:1250},
+  {id:2,p:'tt',date:ds(today,-5),text:'¿Sabías que Breeze Assistant puede redactar un email de prospección en 8 segundos? Te muestro cómo en HubSpot.',type:'breeze',status:'posted',imps:840},
+  {id:3,p:'li',date:ds(today,-3),text:'El AEO no es el nuevo SEO. Es mejor. Hoy te explico por qué aparecer en ChatGPT vale más que estar en Google.',type:'aeo',status:'posted',imps:670},
+  {id:4,p:'tt',date:ds(today,-2),text:'El Agente de Prospección de HubSpot trabaja mientras duermes. Literal. Te muestro qué hace en 30 segundos.',type:'agentes',status:'posted',imps:1100},
+  {id:5,p:'li',date:ds(today,1),text:'Esta semana facilité un bootcamp con 40 clientes en LATAM y uno me preguntó algo que me hizo parar...',type:'reflection',status:'pending',imps:0},
+  {id:6,p:'tt',date:ds(today,2),text:'AEO en HubSpot: 3 pasos para que tu empresa aparezca en respuestas de IA. ¿Tu competencia ya está en ChatGPT?',type:'aeo',status:'pending',imps:0},
+  {id:7,p:'li',date:ds(today,3),text:'¿Qué diferencia hay entre un sales rep que usa Breeze y uno que no? Te cuento desde mi experiencia como profe.',type:'reflection',status:'suggestion',imps:0},
+  {id:8,p:'tt',date:ds(today,4),text:'Customer Agent de HubSpot: resolvió 3 tickets mientras yo tomaba café. Te lo muestro.',type:'agentes',status:'suggestion',imps:0},
+];
+
+function loadPosts(){
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch(e){ return null; }
+}
+
+function savePosts(){
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(posts)); } catch(e){}
+  try { localStorage.setItem(UID_KEY, String(uid)); } catch(e){}
+}
+
+function loadUid(){
+  try { return parseInt(localStorage.getItem(UID_KEY))||50; } catch(e){ return 50; }
+}
+
+function resetData(){
+  if(!confirm('¿Borrar todos tus datos y volver a los ejemplos? Esta acción no se puede deshacer.')) return;
+  try { localStorage.removeItem(STORAGE_KEY); localStorage.removeItem(UID_KEY); } catch(e){}
+  posts = SAMPLE_POSTS.map(p=>({...p}));
+  uid = 50;
+  savePosts();
+  renderParrilla();
+  toast('🔄 Datos reiniciados a ejemplos');
+}
+
+// Load from storage or fall back to sample data
+const saved = loadPosts();
+let posts = saved ? saved : SAMPLE_POSTS.map(p=>({...p}));
+let uid = loadUid();
+// ─────────────────────────────────────────────────────────────
+
+const DAYS=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+
+const CONTENT={
+  li:{
+    reflection:[
+      {text:'Esta semana facilité un bootcamp con 40 clientes en LATAM y uno me preguntó algo que me hizo parar en seco: "¿Para qué sirve una herramienta si nadie la usa?" Eso me llevó directo a pensar en el onboarding de HubSpot. Te cuento lo que descubrí 👇',tags:['reflection','human']},
+      {text:'Madrid me recibió hace tres años con frío y sin conocidos. Construir una red de clientes en LATAM desde España se parece mucho a un pipeline en HubSpot: primero los datos, después las relaciones.',tags:['reflection','human']},
+      {text:'El kilómetro 30 de la Maratón de Madrid y una cuenta que no activa su portal tienen algo en común: todo es proceso, todo es acompañamiento. Hoy te cuento por qué el onboarding de HubSpot lo cambió todo para mí.',tags:['reflection','hubspot']},
+    ],
+    milestone:[
+      {text:'Acabo de terminar la guía de onboarding de HubSpot Academy para toda LATAM. Meses de trabajo, decenas de sesiones, cientos de clientes. La herramienta que más me ayudó a organizarlo: el CRM de HubSpot. Ironía pura.',tags:['milestone','hubspot']},
+      {text:'Hoy di mi sesión número 50 de bootcamp en español. 50. Cada una diferente. Lo que aprendí en la 50 lo aprendí por error en la número 3. Así funciona también Breeze: mejora con cada interacción.',tags:['milestone','breeze']},
+    ],
+    contraste:[
+      {text:'Antes: un SDR tardaba 2 horas en investigar, escribir y hacer seguimiento a un prospecto. Después de Breeze Prospecting Agent: 8 minutos. No es magia. Es HubSpot bien configurado.',tags:['contraste','breeze']},
+      {text:'Antes del AEO: tu empresa aparecía en Google si pagabas o esperabas meses. Hoy: si configuras bien tu contenido en HubSpot, ChatGPT puede citarte como fuente. Ese es el juego ahora.',tags:['contraste','aeo']},
+    ],
+  },
+  tt:{
+    breeze:[
+      {text:'HOOK: ¿Cuánto tiempo tardas en escribir un email de prospección?\n\nBreeze Assistant lo hace en 8 segundos.\n\nDEMO: Abro HubSpot → Sales Workspace → Breeze → genero el email → personalizado con el nombre del prospecto.\n\nResultado: más tiempo para llamadas, menos tiempo escribiendo.',tags:['breeze','demo']},
+      {text:'HOOK: Tu equipo escribe emails todo el día. ¿Y si no tuviera que hacerlo?\n\nBreeze Assistant redacta, personaliza y sugiere el mejor momento de envío.\n\nTe muestro la demo en 30 segundos.',tags:['breeze','hook']},
+    ],
+    aeo:[
+      {text:'HOOK: ¿Tu empresa aparece cuando alguien le pregunta a ChatGPT?\n\nSi no, el AEO es lo que necesitas.\n\nAEO = Answer Engine Optimization. El nuevo SEO para motores de IA.\n\nEn HubSpot puedes optimizar tu contenido para que Claude, Gemini y ChatGPT te mencionen. Te enseño cómo.',tags:['aeo','demo']},
+      {text:'HOOK: Google ya no es el único buscador. ChatGPT responde millones de preguntas al día.\n\n¿Cómo aparecer ahí? Con AEO y HubSpot.\n\n3 pasos en menos de 45 segundos. Arrancamos.',tags:['aeo','hook']},
+    ],
+    agentes:[
+      {text:'HOOK: Imagina que un agente trabaja por ti mientras duermes.\n\nAsí funciona el Agente de Prospección de HubSpot.\n\nDEMO: Configuro el agente → le doy el ICP → empieza a identificar prospectos y generar outreach automático.\n\nUn rep + este agente = 3 reps tradicionales.',tags:['agentes','prospecting']},
+      {text:'HOOK: ¿Cuántos tickets sin resolver tiene tu equipo hoy?\n\nEl Customer Agent de HubSpot resolvió 3 mientras yo grababa este video.\n\nTe muestro en 30 segundos cómo lo configuras.',tags:['agentes','customer']},
+    ],
+  }
+};
+
+// TABS
+function switchTab(name,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('view-'+name).classList.add('active');
+  if(name==='calendario')renderCal();
+  if(name==='analytics')renderAnalytics();
+  if(name==='parrilla')renderParrilla();
+}
+
+// WEEK NAV
+function changeWeek(d){weekStart.setDate(weekStart.getDate()+d*7);renderParrilla();}
+
+function updateWeekLabel(){
+  const e=new Date(weekStart);e.setDate(e.getDate()+6);
+  const f=x=>x.toLocaleDateString('es-ES',{day:'numeric',month:'short'});
+  document.getElementById('weekLabel').textContent=f(weekStart)+' — '+f(e);
+}
+
+// PARRILLA
+function renderParrilla(){
+  updateWeekLabel();
+  renderDays('li');renderDays('tt');
+  const ws=weekStart.toISOString().split('T')[0];
+  const we=new Date(weekStart);we.setDate(we.getDate()+6);const wesStr=we.toISOString().split('T')[0];
+  const liN=posts.filter(p=>p.p==='li'&&p.date>=ws&&p.date<=wesStr).length;
+  const ttN=posts.filter(p=>p.p==='tt'&&p.date>=ws&&p.date<=wesStr).length;
+  document.getElementById('li-count').textContent=liN+' posts';
+  document.getElementById('tt-count').textContent=ttN+' videos';
+}
+
+function renderDays(plat){
+  const c=document.getElementById(plat+'-days');c.innerHTML='';
+  for(let i=0;i<7;i++){
+    const d=new Date(weekStart);d.setDate(d.getDate()+i);
+    const dateStr=d.toISOString().split('T')[0];
+    const dayPosts=posts.filter(p=>p.p===plat&&p.date===dateStr);
+    const slot=document.createElement('div');slot.className='day-slot';
+    const lbl=document.createElement('div');
+    lbl.className='day-label';
+    lbl.innerHTML=DAYS[i]+' <span style="color:var(--text);font-size:11px;">'+d.getDate()+' '+d.toLocaleDateString('es-ES',{month:'short'})+'</span>'+(dateStr===todayStr?' <span class="today-badge">HOY</span>':'');
+    slot.appendChild(lbl);
+    if(!dayPosts.length){
+      const em=document.createElement('div');em.className='empty-slot';em.textContent='+ Agregar contenido';
+      em.onclick=()=>openAddModal(plat,dateStr);slot.appendChild(em);
+    } else {
+      dayPosts.forEach(post=>{
+        const card=document.createElement('div');card.className='ccard '+post.status;
+        card.innerHTML=`<div class="ccard-status ${post.status}">${post.status==='posted'?'✅ Posteado':post.status==='pending'?'⏳ Pendiente':'💡 Sugerencia'}${post.imps?` <span class="imp-count">👁 ${post.imps.toLocaleString()}</span>`:''}</div><div class="ccard-text">${post.text.substring(0,90)}${post.text.length>90?'…':''}</div><div class="ccard-meta"><span class="ctag ${post.type}">${post.type}</span>${post.status!=='posted'?`<button class="mark-btn" onclick="openMarkModal(${post.id})">Marcar posteado</button>`:''}</div>`;
+        slot.appendChild(card);
+      });
+      const ab=document.createElement('button');ab.className='add-more-btn';ab.textContent='+ agregar otro';
+      ab.onclick=()=>openAddModal(plat,dateStr);slot.appendChild(ab);
+    }
+    c.appendChild(slot);
+  }
+}
+
+// CALENDAR
+function renderCal(){
+  const yr=today.getFullYear(),mo=today.getMonth();
+  document.getElementById('cal-title').textContent=new Date(yr,mo,1).toLocaleDateString('es-ES',{month:'long',year:'numeric'});
+  const grid=document.getElementById('cal-grid');grid.innerHTML='';
+  const first=new Date(yr,mo,1);let sd=first.getDay()-1;if(sd<0)sd=6;
+  const dim=new Date(yr,mo+1,0).getDate(),dip=new Date(yr,mo,0).getDate();
+  const total=Math.ceil((sd+dim)/7)*7;
+  for(let i=0;i<total;i++){
+    let cd;let other=false;
+    if(i<sd){cd=new Date(yr,mo-1,dip-sd+i+1);other=true;}
+    else if(i-sd>=dim){cd=new Date(yr,mo+1,i-sd-dim+1);other=true;}
+    else cd=new Date(yr,mo,i-sd+1);
+    const cell=document.createElement('div');cell.className='cal-cell'+(other?' other':'')+(cd.toISOString().split('T')[0]===todayStr?' today-cell':'');
+    const dateStr=cd.toISOString().split('T')[0];
+    const num=document.createElement('div');num.className='cal-num';num.textContent=cd.getDate();cell.appendChild(num);
+    const dp=posts.filter(p=>p.date===dateStr);
+    dp.slice(0,3).forEach(post=>{
+      const dot=document.createElement('div');
+      dot.className=post.p==='li'?(post.status==='posted'?'cal-dot-li-posted':'cal-dot-li-suggest'):(post.status==='posted'?'cal-dot-tt-posted':'cal-dot-tt-suggest');
+      dot.textContent=(post.p==='li'?'in ':'tt ')+post.text.substring(0,20)+'…';dot.title=post.text;cell.appendChild(dot);
+    });
+    if(dp.length>3){const m=document.createElement('div');m.style.cssText='font-size:10px;color:var(--muted);';m.textContent='+'+( dp.length-3)+' más';cell.appendChild(m);}
+    grid.appendChild(cell);
+  }
+}
+
+// GENERATOR
+function pickOpt(el){
+  const p=el.dataset.p;
+  document.querySelectorAll(`[data-p="${p}"]`).forEach(o=>o.classList.remove('sel'));
+  el.classList.add('sel');
+  // Show/hide reflection sub-question
+  if(p==='li'){
+    const subq=document.getElementById('li-reflection-subq');
+    if(el.dataset.t==='reflection') subq.classList.add('visible');
+    else subq.classList.remove('visible');
+  }
+}
+
+function pickSource(el){
+  document.querySelectorAll('.subq-opt').forEach(o=>o.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+function getReflectionSource(){
+  const sel=document.querySelector('.subq-opt.sel');
+  return sel?sel.dataset.source:'personal';
+}
+
+function generateLI(){
+  const sel=document.querySelector('[data-p="li"].sel');
+  const type=sel?sel.dataset.t:'reflection';
+  // If reflection, pass the source context
+  const source=type==='reflection'?getReflectionSource():null;
+  generate('li', source);
+}
+
+async function generate(plat, reflectionSource=null){
+  const sel=document.querySelector(`[data-p="${plat}"].sel`);
+  const type=sel?sel.dataset.t:(plat==='li'?'reflection':'breeze');
+  const res=document.getElementById(plat+'-results');
+  res.innerHTML='<div class="loading"><div class="spinner"></div>Generando con tu brand voice...</div>';
+
+  // Build performance context from existing posts
+  const postedPosts=posts.filter(p=>p.status==='posted'&&p.p===plat).sort((a,b)=>b.imps-a.imps);
+  const topPosts=postedPosts.slice(0,3).map(p=>`"${p.text.substring(0,80)}…" → ${p.imps} impresiones`).join('\n');
+  const avgImps=postedPosts.length?Math.round(postedPosts.reduce((a,b)=>a+b.imps,0)/postedPosts.length):0;
+
+  const typeLabels={
+    reflection:'Reflexión personal + conexión con HubSpot',
+    milestone:'Hito o logro profesional + herramienta usada',
+    contraste:'Antes vs. Después con HubSpot',
+    breeze:'Video TikTok ≤45s sobre Breeze Assistant',
+    aeo:'Video TikTok ≤45s sobre AEO (Answer Engine Optimization)',
+    agentes:'Video TikTok ≤45s sobre Agentes de HubSpot (Prospección o Customer)',
+  };
+
+  const isLI=plat==='li';
+
+  // Build reflection source context
+  const sourceContext = reflectionSource==='cliente'
+    ? `FUENTE DE LA HISTORIA: Conversación con cliente o sesión de bootcamp. El post debe partir de algo que dijo o vivió un cliente real de Juan (puede ser anónimo), mostrar el aprendizaje desde afuera, y conectar con HubSpot desde esa perspectiva externa. Más empático, menos introspectivo.`
+    : reflectionSource==='personal'
+    ? `FUENTE DE LA HISTORIA: Experiencia personal de Juan. El post parte de algo que él vivió directamente — un fin de semana, un reto personal, una reflexión suya. Voz en primera persona, íntima, auténtica.`
+    : '';
+
+  const systemPrompt=`Eres el asistente de contenido de Juan Quiroz (Juancho), Senior Professor en HubSpot Academy responsable del programa de onboarding en español para LATAM.
+
+BRAND VOICE DE JUANCHO:
+- Tono: cálido, directo, experto pero accesible. Nunca frío ni corporativo.
+- Español latino neutro. Tuteo siempre. Sin formalismos.
+- Frases naturales: "Te cuento que...", "Precisamente...", "De igual forma..."
+- Referente de estilo: Tony Stark — brillante, mantiene la atención, no pierde el objetivo.
+- Emoción que busca generar: que el lector sienta "lo logré" o "mi tiempo fue bien invertido".
+- NUNCA frases genéricas de apertura ni jerga corporativa vacía.
+
+${isLI?`ESTRATEGIA LINKEDIN:
+- Contenido humano que SIEMPRE conecta con HubSpot.
+- Fórmula: experiencia personal → reflexión → conexión con herramienta HubSpot → llamada a acción suave.
+- Posts de texto, no videos. Longitud media (150-250 palabras).
+- El lado humano es el anzuelo; HubSpot es el destino.
+- Juan es originalmente de Colombia, vive en Madrid hace 3 años, facilita bootcamps en LATAM.
+${sourceContext}`
+:`ESTRATEGIA TIKTOK:
+- Videos máximo 45 segundos. Estructura: HOOK fuerte → explicación brevísima de qué logra la herramienta → demo rápida en HubSpot → llamada a acción.
+- El script debe poder leerse en voz alta en ≤45 segundos.
+- Herramientas foco: Breeze Assistant, AEO (Answer Engine Optimization — aparecer en ChatGPT/Gemini/Claude), Agentes de prospección y Customer.
+- Incluir indicaciones de demo: qué mostrar en pantalla.`}
+
+RENDIMIENTO RECIENTE EN ${isLI?'LINKEDIN':'TIKTOK'}:
+${topPosts||'Sin historial aún — genera contenido fresco.'}
+Promedio de impresiones: ${avgImps||'N/A'}
+
+Responde SOLO con un JSON válido, sin backticks ni texto adicional. Formato exacto:
+{"ideas":[{"text":"contenido completo del post o script","tags":["tag1","tag2"]},{"text":"...","tags":[...]},{"text":"...","tags":[...]}]}
+
+Genera 3 ideas distintas para el tipo: ${typeLabels[type]||type}.
+Las ideas deben aprender del rendimiento: si algo pegó bien, usa ese estilo. Si no hay historial, sé creativo y fiel al brand voice.`;
+
+  try {
+    const response=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:2000,
+        system:systemPrompt,
+        messages:[{role:'user',content:`Genera 3 ideas de contenido para ${isLI?'LinkedIn':'TikTok'}, tipo: ${typeLabels[type]||type}. Responde solo con el JSON.`}]
+      })
+    });
+
+    const data=await response.json();
+    const raw=data.content?.find(b=>b.type==='text')?.text||'';
+    const clean=raw.replace(/```json|```/g,'').trim();
+
+    let ideas=[];
+    try {
+      ideas=JSON.parse(clean).ideas||[];
+    } catch(e){
+      const matches=[...clean.matchAll(/\{[^{}]*"text"\s*:\s*"((?:[^"\\]|\\.)*)"/g)];
+      ideas=matches.map(m=>{
+        const tagsMatch=clean.slice(m.index).match(/"tags"\s*:\s*\[([^\]]*)\]/);
+        const tags=tagsMatch?tagsMatch[1].match(/"([^"]+)"/g)?.map(t=>t.replace(/"/g,''))||[]:[];
+        return {text:m[1].replace(/\\n/g,'\n').replace(/\\"/g,'"'),tags};
+      });
+      if(!ideas.length) throw new Error('No se pudieron parsear las ideas');
+    }
+
+    res.innerHTML='';
+    ideas.forEach((item,idx)=>{
+      const card=document.createElement('div');card.className='res-card';
+      const tags=item.tags||[type];
+      card.innerHTML=`<div class="res-head"><div class="res-num">Opción ${idx+1}</div><div class="res-actions"><button class="res-btn add" onclick='addFromGen("${plat}","${type}",${JSON.stringify(item.text)})'>+ Agregar</button><button class="res-btn skip" onclick="this.closest('.res-card').style.opacity='.3'">Ignorar</button></div></div><div class="res-text">${item.text.replace(/\n/g,'<br>')}</div><div class="res-tags">${tags.map(t=>`<span class="ctag ${t}">${t}</span>`).join('')}</div>`;
+      res.appendChild(card);
+    });
+
+  } catch(err){
+    res.innerHTML=`<div style="padding:16px;color:var(--tt);font-size:13px;">⚠️ Error al conectar con la IA: ${err.message}. Verifica tu conexión e intenta de nuevo.</div>`;
+  }
+}
+
+function addFromGen(plat,type,text){
+  const future=new Date(today);future.setDate(future.getDate()+1);
+  posts.push({id:uid++,p:plat,date:future.toISOString().split('T')[0],text,type,status:'suggestion',imps:0});savePosts();
+  toast('✅ Contenido agregado a la parrilla');
+}
+
+// MODALS
+function openMarkModal(postId){
+  const post=posts.find(p=>p.id===postId);
+  document.getElementById('m-title').textContent='Marcar como posteado';
+  document.getElementById('m-body').textContent=post.text.substring(0,80)+'…';
+  document.getElementById('m-extra').innerHTML='<label class="modal-label">Impresiones obtenidas (opcional)</label><input id="imp-val" type="number" class="modal-input" placeholder="ej: 1200">';
+  document.getElementById('m-confirm').textContent='✅ Confirmar';
+  document.getElementById('m-confirm').onclick=()=>{
+    const v=parseInt(document.getElementById('imp-val').value)||0;
+    post.status='posted';post.imps=v;savePosts();closeModal();renderParrilla();
+    toast('✅ Posteado!'+(v?' · '+v.toLocaleString()+' impresiones':''));
+  };
+  document.getElementById('overlay').classList.add('open');
+}
+
+function openAddModal(plat,dateStr){
+  document.getElementById('m-title').textContent='Nuevo contenido';
+  document.getElementById('m-body').innerHTML='';
+  document.getElementById('m-extra').innerHTML='<label class="modal-label">Describe tu idea de contenido</label><textarea id="new-text" class="modal-input" rows="3" placeholder="Escribe aquí tu idea o borrador..."></textarea>';
+  document.getElementById('m-confirm').textContent='+ Agregar';
+  document.getElementById('m-confirm').onclick=()=>{
+    const txt=document.getElementById('new-text').value.trim();
+    if(txt){posts.push({id:uid++,p:plat,date:dateStr,text:txt,type:'custom',status:'pending',imps:0});savePosts();renderParrilla();toast('✅ Post agregado');}
+    closeModal();
+  };
+  document.getElementById('overlay').classList.add('open');
+}
+
+function closeModal(){document.getElementById('overlay').classList.remove('open');}
+
+// ANALYTICS
+function renderAnalytics(){
+  const posted=posts.filter(p=>p.status==='posted');
+  const total=posted.reduce((a,b)=>a+b.imps,0);
+  const li=posted.filter(p=>p.p==='li').length;
+  const tt=posted.filter(p=>p.p==='tt').length;
+  const best=[...posted].sort((a,b)=>b.imps-a.imps)[0];
+  document.getElementById('m-total').textContent=total.toLocaleString();
+  document.getElementById('m-li').textContent=li;
+  document.getElementById('m-tt').textContent=tt;
+  if(best){document.getElementById('m-best').textContent=best.imps.toLocaleString();document.getElementById('m-best-sub').textContent=best.p.toUpperCase()+' · '+fmt(best.date);}
+  const tbody=document.getElementById('a-tbody');tbody.innerHTML='';
+  [...posts].sort((a,b)=>b.date.localeCompare(a.date)).forEach(post=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${fmt(post.date)}</td><td><span class="plt-badge ${post.p}">${post.p==='li'?'in LinkedIn':'tt TikTok'}</span></td><td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${post.text}</td><td><span class="ctag ${post.type}">${post.type}</span></td><td><span class="st-badge ${post.status}">${post.status==='posted'?'Posteado':post.status==='pending'?'Pendiente':'Sugerencia'}</span></td><td><input class="imp-inp" type="number" value="${post.imps||''}" placeholder="—" onchange="updImps(${post.id},this.value)"></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function updImps(id,val){const p=posts.find(x=>x.id===id);if(p){p.imps=parseInt(val)||0;savePosts();renderAnalytics();toast('📊 Impresiones actualizadas');}}
+
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show';setTimeout(()=>t.className='toast',2600);}
+
+// INIT
+renderParrilla();
+</script>
+</body>
+</html>
