@@ -129,6 +129,14 @@
   .subq-icon { font-size:16px;flex-shrink:0; }
   .subq-title { font-size:12px;font-weight:600; }
   .subq-sub { font-size:10px;color:var(--muted);margin-top:1px; }
+  .format-selector { display:flex;gap:6px;margin-top:10px; }
+  .fmt-btn { flex:1;padding:7px 4px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;text-align:center;font-family:'DM Sans',sans-serif; }
+  .fmt-btn:hover { border-color:var(--accent);color:var(--text); }
+  .fmt-btn.active { border-color:var(--accent);background:rgba(255,122,89,.1);color:var(--accent); }
+  .fmt-btn.li-active { border-color:var(--li);background:rgba(10,102,194,.1);color:#5ba3e8; }
+  .ctag.texto { background:rgba(45,212,160,.12);color:var(--success); }
+  .ctag.foto { background:rgba(245,200,66,.12);color:var(--warning); }
+  .ctag.video { background:rgba(165,120,255,.12);color:#a578ff; }
   .gen-opt-icon { font-size:15px; }
   .gen-opt-title { font-size:13px;font-weight:500; }
   .gen-opt-sub { font-size:10px;color:var(--muted); }
@@ -189,6 +197,8 @@
   .modal-footer { display:flex;gap:8px;justify-content:flex-end;margin-top:18px; }
   .mbtn { padding:9px 18px;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid;font-family:'Syne',sans-serif;transition:all .2s; }
   .mbtn.primary { background:var(--success);border-color:var(--success);color:#0a0a0f; }
+  .mbtn.danger { background:none;border-color:var(--tt);color:var(--tt); }
+  .mbtn.danger:hover { background:rgba(254,44,85,.1); }
   .mbtn.secondary { background:none;border-color:var(--border);color:var(--muted); }
   .mbtn:hover { opacity:.85; }
 
@@ -346,7 +356,7 @@
     </div>
     <div class="analytics-table">
       <div class="table-title">📈 Historial de publicaciones</div>
-      <table><thead><tr><th>Fecha</th><th>Plataforma</th><th>Contenido</th><th>Tipo</th><th>Estado</th><th>Impresiones</th></tr></thead>
+      <table><thead><tr><th>Fecha</th><th>Plataforma</th><th>Contenido</th><th>Tipo</th><th>Formato</th><th>Estado</th><th>Impresiones</th></tr></thead>
       <tbody id="a-tbody"></tbody></table>
     </div>
   </div>
@@ -359,6 +369,7 @@
     <div class="modal-body" id="m-body"></div>
     <div id="m-extra"></div>
     <div class="modal-footer">
+      <button class="mbtn danger" id="m-delete" style="display:none;margin-right:auto;" onclick="deleteCurrentPost()">🗑 Eliminar</button>
       <button class="mbtn secondary" onclick="closeModal()">Cancelar</button>
       <button class="mbtn primary" id="m-confirm">Confirmar</button>
     </div>
@@ -385,14 +396,14 @@ const STORAGE_KEY = 'juancho_posts_v1';
 const UID_KEY     = 'juancho_uid_v1';
 
 const SAMPLE_POSTS = [
-  {id:1,p:'li',date:ds(today,-6),text:'Tres años en España y la Maratón de Madrid me enseñaron algo: todo proceso requiere sus pasos. Igual que activar un CRM en tu equipo.',type:'reflection',status:'posted',imps:1250},
-  {id:2,p:'tt',date:ds(today,-5),text:'¿Sabías que Breeze Assistant puede redactar un email de prospección en 8 segundos? Te muestro cómo en HubSpot.',type:'breeze',status:'posted',imps:840},
-  {id:3,p:'li',date:ds(today,-3),text:'El AEO no es el nuevo SEO. Es mejor. Hoy te explico por qué aparecer en ChatGPT vale más que estar en Google.',type:'aeo',status:'posted',imps:670},
-  {id:4,p:'tt',date:ds(today,-2),text:'El Agente de Prospección de HubSpot trabaja mientras duermes. Literal. Te muestro qué hace en 30 segundos.',type:'agentes',status:'posted',imps:1100},
-  {id:5,p:'li',date:ds(today,1),text:'Esta semana facilité un bootcamp con 40 clientes en LATAM y uno me preguntó algo que me hizo parar...',type:'reflection',status:'pending',imps:0},
-  {id:6,p:'tt',date:ds(today,2),text:'AEO en HubSpot: 3 pasos para que tu empresa aparezca en respuestas de IA. ¿Tu competencia ya está en ChatGPT?',type:'aeo',status:'pending',imps:0},
-  {id:7,p:'li',date:ds(today,3),text:'¿Qué diferencia hay entre un sales rep que usa Breeze y uno que no? Te cuento desde mi experiencia como profe.',type:'reflection',status:'suggestion',imps:0},
-  {id:8,p:'tt',date:ds(today,4),text:'Customer Agent de HubSpot: resolvió 3 tickets mientras yo tomaba café. Te lo muestro.',type:'agentes',status:'suggestion',imps:0},
+  {id:1,p:'li',date:ds(today,-6),text:'Tres años en España y la Maratón de Madrid me enseñaron algo: todo proceso requiere sus pasos. Igual que activar un CRM en tu equipo.',type:'reflection',format:'texto',status:'posted',imps:1250},
+  {id:2,p:'tt',date:ds(today,-5),text:'¿Sabías que Breeze Assistant puede redactar un email de prospección en 8 segundos? Te muestro cómo en HubSpot.',type:'breeze',format:'video',status:'posted',imps:840},
+  {id:3,p:'li',date:ds(today,-3),text:'El AEO no es el nuevo SEO. Es mejor. Hoy te explico por qué aparecer en ChatGPT vale más que estar en Google.',type:'aeo',format:'texto',status:'posted',imps:670},
+  {id:4,p:'tt',date:ds(today,-2),text:'El Agente de Prospección de HubSpot trabaja mientras duermes. Literal. Te muestro qué hace en 30 segundos.',type:'agentes',format:'video',status:'posted',imps:1100},
+  {id:5,p:'li',date:ds(today,1),text:'Esta semana facilité un bootcamp con 40 clientes en LATAM y uno me preguntó algo que me hizo parar...',type:'reflection',format:'texto',status:'pending',imps:0},
+  {id:6,p:'tt',date:ds(today,2),text:'AEO en HubSpot: 3 pasos para que tu empresa aparezca en respuestas de IA. ¿Tu competencia ya está en ChatGPT?',type:'aeo',format:'video',status:'pending',imps:0},
+  {id:7,p:'li',date:ds(today,3),text:'¿Qué diferencia hay entre un sales rep que usa Breeze y uno que no? Te cuento desde mi experiencia como profe.',type:'reflection',format:'texto',status:'suggestion',imps:0},
+  {id:8,p:'tt',date:ds(today,4),text:'Customer Agent de HubSpot: resolvió 3 tickets mientras yo tomaba café. Te lo muestro.',type:'agentes',format:'video',status:'suggestion',imps:0},
 ];
 
 function loadPosts(){
@@ -510,7 +521,8 @@ function renderDays(plat){
     } else {
       dayPosts.forEach(post=>{
         const card=document.createElement('div');card.className='ccard '+post.status;
-        card.innerHTML=`<div class="ccard-status ${post.status}">${post.status==='posted'?'✅ Posteado':post.status==='pending'?'⏳ Pendiente':'💡 Sugerencia'}${post.imps?` <span class="imp-count">👁 ${post.imps.toLocaleString()}</span>`:''}</div><div class="ccard-text">${post.text.substring(0,90)}${post.text.length>90?'…':''}</div><div class="ccard-meta"><span class="ctag ${post.type}">${post.type}</span>${post.status!=='posted'?`<button class="mark-btn" onclick="openMarkModal(${post.id})">Marcar posteado</button>`:''}</div>`;
+        const fmtIconC=post.format==='video'?'🎬':post.format==='foto'?'📷':'📝';
+        card.innerHTML=`<div class="ccard-status ${post.status}">${post.status==='posted'?'✅ Posteado':post.status==='pending'?'⏳ Pendiente':'💡 Sugerencia'}${post.imps?` <span class="imp-count">👁 ${post.imps.toLocaleString()}</span>`:''}</div><div class="ccard-text">${post.text.substring(0,90)}${post.text.length>90?'…':''}</div><div class="ccard-meta"><span class="ctag ${post.type}">${post.type}</span><span class="ctag ${post.format||'texto'}">${fmtIconC} ${post.format||'texto'}</span>${post.status!=='posted'?`<button class="mark-btn" onclick="openMarkModal(${post.id})">Marcar posteado</button>`:''}</div>`;
         slot.appendChild(card);
       });
       const ab=document.createElement('button');ab.className='add-more-btn';ab.textContent='+ agregar otro';
@@ -540,7 +552,11 @@ function renderCal(){
     dp.slice(0,3).forEach(post=>{
       const dot=document.createElement('div');
       dot.className=post.p==='li'?(post.status==='posted'?'cal-dot-li-posted':'cal-dot-li-suggest'):(post.status==='posted'?'cal-dot-tt-posted':'cal-dot-tt-suggest');
-      dot.textContent=(post.p==='li'?'in ':'tt ')+post.text.substring(0,20)+'…';dot.title=post.text;cell.appendChild(dot);
+      dot.textContent=(post.p==='li'?'in ':'tt ')+post.text.substring(0,20)+'…';
+      dot.title='Ver post';
+      dot.style.cursor='pointer';
+      dot.onclick=(e)=>{e.stopPropagation();openPostDetail(post.id);};
+      cell.appendChild(dot);
     });
     if(dp.length>3){const m=document.createElement('div');m.style.cssText='font-size:10px;color:var(--muted);';m.textContent='+'+( dp.length-3)+' más';cell.appendChild(m);}
     grid.appendChild(cell);
@@ -689,14 +705,22 @@ function addFromGen(plat,type,text){
 }
 
 // MODALS
+let _detailPostId=null;
+
 function openMarkModal(postId){
+  _detailPostId=null;
+  document.getElementById('m-delete').style.display='none';
   const post=posts.find(p=>p.id===postId);
   document.getElementById('m-title').textContent='Marcar como posteado';
   document.getElementById('m-body').textContent=post.text.substring(0,80)+'…';
-  document.getElementById('m-extra').innerHTML='<label class="modal-label">Impresiones obtenidas (opcional)</label><input id="imp-val" type="number" class="modal-input" placeholder="ej: 1200">';
+  const curFmt=post.format||'texto';
+  const liFormats=post.p==='li'?`<button class="fmt-btn${curFmt==='texto'?' li-active':''}" onclick="setFmt(this,'texto')">📝 Texto</button><button class="fmt-btn${curFmt==='foto'?' li-active':''}" onclick="setFmt(this,'foto')">📷 Foto</button><button class="fmt-btn${curFmt==='video'?' li-active':''}" onclick="setFmt(this,'video')">🎬 Video</button>`:`<button class="fmt-btn${curFmt==='video'?' active':''}" onclick="setFmt(this,'video')">🎬 Video</button><button class="fmt-btn${curFmt==='foto'?' active':''}" onclick="setFmt(this,'foto')">📷 Foto</button>`;
+  document.getElementById('m-extra').innerHTML=`<label class="modal-label">Formato de contenido</label><div class="format-selector" id="fmt-sel">${liFormats}</div><label class="modal-label" style="margin-top:12px;">Impresiones obtenidas (opcional)</label><input id="imp-val" type="number" class="modal-input" placeholder="ej: 1200">`;
   document.getElementById('m-confirm').textContent='✅ Confirmar';
   document.getElementById('m-confirm').onclick=()=>{
     const v=parseInt(document.getElementById('imp-val').value)||0;
+    const selFmt=document.querySelector('#fmt-sel .fmt-btn.active, #fmt-sel .fmt-btn.li-active');
+    post.format=selFmt?selFmt.textContent.trim().split(' ')[1]:post.format||'texto';
     post.status='posted';post.imps=v;savePosts();closeModal();renderParrilla();
     toast('✅ Posteado!'+(v?' · '+v.toLocaleString()+' impresiones':''));
   };
@@ -704,16 +728,87 @@ function openMarkModal(postId){
 }
 
 function openAddModal(plat,dateStr){
+  _detailPostId=null;
+  document.getElementById('m-delete').style.display='none';
   document.getElementById('m-title').textContent='Nuevo contenido';
   document.getElementById('m-body').innerHTML='';
-  document.getElementById('m-extra').innerHTML='<label class="modal-label">Describe tu idea de contenido</label><textarea id="new-text" class="modal-input" rows="3" placeholder="Escribe aquí tu idea o borrador..."></textarea>';
+  const addFormats=plat==='li'?`<button class="fmt-btn li-active" onclick="setFmt(this,'texto')">📝 Texto</button><button class="fmt-btn" onclick="setFmt(this,'foto')">📷 Foto</button><button class="fmt-btn" onclick="setFmt(this,'video')">🎬 Video</button>`:`<button class="fmt-btn active" onclick="setFmt(this,'video')">🎬 Video</button><button class="fmt-btn" onclick="setFmt(this,'foto')">📷 Foto</button>`;
+  document.getElementById('m-extra').innerHTML=`<label class="modal-label">Formato de contenido</label><div class="format-selector" id="fmt-sel">${addFormats}</div><label class="modal-label" style="margin-top:12px;">Describe tu idea de contenido</label><textarea id="new-text" class="modal-input" rows="3" placeholder="Escribe aquí tu idea o borrador..."></textarea>`;
   document.getElementById('m-confirm').textContent='+ Agregar';
   document.getElementById('m-confirm').onclick=()=>{
     const txt=document.getElementById('new-text').value.trim();
-    if(txt){posts.push({id:uid++,p:plat,date:dateStr,text:txt,type:'custom',status:'pending',imps:0});savePosts();renderParrilla();toast('✅ Post agregado');}
+    const selFmt=document.querySelector('#fmt-sel .fmt-btn.active, #fmt-sel .fmt-btn.li-active');
+    const fmt2=selFmt?selFmt.textContent.trim().split(' ')[1]:(plat==='tt'?'video':'texto');
+    if(txt){posts.push({id:uid++,p:plat,date:dateStr,text:txt,type:'custom',format:fmt2,status:'pending',imps:0});savePosts();renderParrilla();toast('✅ Post agregado');}
     closeModal();
   };
   document.getElementById('overlay').classList.add('open');
+}
+
+function deleteCurrentPost(){
+  if(!_detailPostId){toast('⚠️ No hay post seleccionado');return;}
+  if(!confirm('¿Eliminar este post? Esta acción no se puede deshacer.')) return;
+  posts=posts.filter(p=>p.id!==_detailPostId);
+  _detailPostId=null;
+  savePosts();
+  closeModal();
+  renderParrilla();
+  renderCal();
+  // Re-render analytics only if that view exists
+  const aBody=document.getElementById('a-tbody');
+  if(aBody) renderAnalytics();
+  toast('🗑 Post eliminado');
+}
+
+function openPostDetail(postId){
+  _detailPostId=postId;
+  const post=posts.find(p=>p.id===postId);
+  const platLabel=post.p==='li'?'LinkedIn':'TikTok';
+  // Show delete button
+  document.getElementById('m-delete').style.display='inline-flex';
+  const platColor=post.p==='li'?'var(--li)':'var(--tt)';
+  const statusLabel=post.status==='posted'?'✅ Posteado':post.status==='pending'?'⏳ Pendiente':'💡 Sugerencia';
+
+  document.getElementById('m-title').innerHTML=`<span style="font-size:12px;padding:2px 8px;border-radius:5px;background:${platColor}22;color:${platColor};font-weight:600;margin-right:8px;">${platLabel}</span>${statusLabel}`;
+  document.getElementById('m-body').innerHTML=`
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;font-size:13px;line-height:1.7;white-space:pre-wrap;">${post.text}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <span class="ctag ${post.type}">${post.type}</span>
+      <span style="font-size:11px;color:var(--muted);">${fmt(post.date)}</span>
+      ${post.imps?`<span style="font-size:12px;color:var(--success);">👁 ${post.imps.toLocaleString()} impresiones</span>`:''}
+    </div>`;
+
+  const dFmt=post.format||'texto';
+  const dFormats=post.p==='li'?`<button class="fmt-btn${dFmt==='texto'?' li-active':''}" onclick="setFmt(this,'texto')">📝 Texto</button><button class="fmt-btn${dFmt==='foto'?' li-active':''}" onclick="setFmt(this,'foto')">📷 Foto</button><button class="fmt-btn${dFmt==='video'?' li-active':''}" onclick="setFmt(this,'video')">🎬 Video</button>`:`<button class="fmt-btn${dFmt==='video'?' active':''}" onclick="setFmt(this,'video')">🎬 Video</button><button class="fmt-btn${dFmt==='foto'?' active':''}" onclick="setFmt(this,'foto')">📷 Foto</button>`;
+  document.getElementById('m-extra').innerHTML=`<label class="modal-label" style="margin-top:4px;">Formato de contenido</label><div class="format-selector" id="fmt-sel">${dFormats}</div><div style="margin-top:12px;"><label class="modal-label">${post.status!=='posted'?'Registrar impresiones':'Actualizar impresiones'}</label><input id="imp-val" type="number" class="modal-input" placeholder="ej: 1200" value="${post.imps||''}"></div>`;
+
+  const confirmBtn=document.getElementById('m-confirm');
+  if(post.status!=='posted'){
+    confirmBtn.textContent='✅ Marcar como posteado';
+    confirmBtn.onclick=()=>{
+      const v=parseInt(document.getElementById('imp-val').value)||0;
+      const selFmt=document.querySelector('#fmt-sel .fmt-btn.active, #fmt-sel .fmt-btn.li-active');
+      if(selFmt) post.format=selFmt.textContent.trim().split(' ')[1];
+      post.status='posted';post.imps=v;savePosts();closeModal();renderCal();
+      toast('✅ Posteado!'+(v?' · '+v.toLocaleString()+' impresiones':''));
+    };
+  } else {
+    confirmBtn.textContent='💾 Guardar cambios';
+    confirmBtn.onclick=()=>{
+      const v=parseInt(document.getElementById('imp-val').value)||0;
+      const selFmt=document.querySelector('#fmt-sel .fmt-btn.active, #fmt-sel .fmt-btn.li-active');
+      if(selFmt) post.format=selFmt.textContent.trim().split(' ')[1];
+      post.imps=v;savePosts();closeModal();renderCal();
+      toast('📊 Cambios guardados');
+    };
+  }
+  document.getElementById('overlay').classList.add('open');
+}
+
+function setFmt(el,fmt){
+  const isLI=el.closest('.format-selector').querySelectorAll('.fmt-btn').length===3;
+  el.closest('.format-selector').querySelectorAll('.fmt-btn').forEach(b=>{b.classList.remove('active','li-active');});
+  el.classList.add(isLI?'li-active':'active');
 }
 
 function closeModal(){document.getElementById('overlay').classList.remove('open');}
@@ -732,7 +827,8 @@ function renderAnalytics(){
   const tbody=document.getElementById('a-tbody');tbody.innerHTML='';
   [...posts].sort((a,b)=>b.date.localeCompare(a.date)).forEach(post=>{
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${fmt(post.date)}</td><td><span class="plt-badge ${post.p}">${post.p==='li'?'in LinkedIn':'tt TikTok'}</span></td><td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${post.text}</td><td><span class="ctag ${post.type}">${post.type}</span></td><td><span class="st-badge ${post.status}">${post.status==='posted'?'Posteado':post.status==='pending'?'Pendiente':'Sugerencia'}</span></td><td><input class="imp-inp" type="number" value="${post.imps||''}" placeholder="—" onchange="updImps(${post.id},this.value)"></td>`;
+    const fmtIcon=post.format==='video'?'🎬':post.format==='foto'?'📷':'📝';
+    tr.innerHTML=`<td>${fmt(post.date)}</td><td><span class="plt-badge ${post.p}">${post.p==='li'?'in LinkedIn':'tt TikTok'}</span></td><td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${post.text}</td><td><span class="ctag ${post.type}">${post.type}</span></td><td><span class="ctag ${post.format||'texto'}">${fmtIcon} ${post.format||'texto'}</span></td><td><span class="st-badge ${post.status}">${post.status==='posted'?'Posteado':post.status==='pending'?'Pendiente':'Sugerencia'}</span></td><td><input class="imp-inp" type="number" value="${post.imps||''}" placeholder="—" onchange="updImps(${post.id},this.value)"></td>`;
     tbody.appendChild(tr);
   });
 }
